@@ -1,4 +1,4 @@
-/* IRLib.h from IRLib ñ an Arduino library for infrared encoding and decoding
+/* IRLib.h from IRLib ‚Äì an Arduino library for infrared encoding and decoding
  * Version 1.51   March 2015
  * Copyright 2014 by Chris Young http://cyborg5.com
  *
@@ -73,8 +73,9 @@ typedef char IRTYPES; //formerly was an enum
 #define PANASONIC_OLD 5
 #define JVC 6
 #define NECX 7
-//#define ADDITIONAL (number) //make additional protocol 8 and change HASH_CODE to 9
-#define HASH_CODE 8
+#define SILVERLIT 8
+//#define ADDITIONAL (number) //make additional protocol 8 and change HASH_CODE to 10
+#define HASH_CODE 9
 #define LAST_PROTOCOL HASH_CODE
 
 const __FlashStringHelper *Pnames(IRTYPES Type); //Returns a character string that is name of protocol.
@@ -93,7 +94,7 @@ public:
   virtual void Reset(void);      // Initializes the decoder
   virtual bool decode(void);     // This base routine always returns false override with your routine
   bool decodeGeneric(unsigned char Raw_Count, unsigned int Head_Mark, unsigned int Head_Space, 
-                     unsigned int Mark_One, unsigned int Mark_Zero, unsigned int Space_One, unsigned int Space_Zero);
+      unsigned int Mark_One, unsigned int Mark_Zero, unsigned int Space_One, unsigned int Space_Zero, bool space_mark );
   virtual void DumpResults (void);
   void UseExtnBuf(void *P); //Normally uses same rawbuf as IRrecv. Use this to define your own buffer.
   void copyBuf (IRdecodeBase *source);//copies rawbuf and rawlen from one decoder to another
@@ -111,7 +112,12 @@ protected:
 };
 
 
-class IRdecodeNEC: public virtual IRdecodeBase 
+class IRdecodeSILVERLIT : public virtual IRdecodeBase {
+public:
+    virtual bool decode( void );
+};
+
+class IRdecodeNEC : public virtual IRdecodeBase
 {
 public:
   virtual bool decode(void);
@@ -173,7 +179,8 @@ public virtual IRdecodeRC5,
 public virtual IRdecodeRC6,
 public virtual IRdecodePanasonic_Old,
 public virtual IRdecodeJVC,
-public virtual IRdecodeNECx
+public virtual IRdecodeNECx,
+public virtual IRdecodeSILVERLIT
 // , public virtual IRdecodeADDITIONAL //add additional protocols here
 {
 public:
@@ -276,10 +283,10 @@ protected:
   void Init(void);
 };
 
-/* Original IRrecv class uses 50µs interrupts to sample input. While this is generally
+/* Original IRrecv class uses 50¬µs interrupts to sample input. While this is generally
  * accurate enough for everyday purposes, it may be difficult to port to other
  * hardware unless you know a lot about hardware timers and interrupts. Also
- * when trying to analyze unknown protocols, the 50µs granularity may not be sufficient.
+ * when trying to analyze unknown protocols, the 50¬µs granularity may not be sufficient.
  * In that case use either the IRrecvLoop or the IRrecvPCI class.
  */
 #ifdef USE_IRRECV
@@ -309,7 +316,7 @@ public:
 };
 
 /* This receiver uses the pin change hardware interrupt to detect when your input pin
- * changes state. It gives more detailed results than the 50µs interrupts of IRrecv
+ * changes state. It gives more detailed results than the 50¬µs interrupts of IRrecv
  * and theoretically is more accurate than IRrecvLoop. However because it only detects
  * pin changes, it doesn't always know when it's finished. GetResults attempts to detect
  * a long gap of space but sometimes the next signal gets there before GetResults notices.
@@ -365,10 +372,10 @@ private:
 void do_Blink(void);
 
 /* This routine maps interrupt numbers used by attachInterrupt() into pin numbers.
- * NOTE: these interrupt numbers which are passed to ìattachInterrupt()î are not 
+ * NOTE: these interrupt numbers which are passed to ‚ÄúattachInterrupt()‚Äù are not 
  * necessarily identical to the interrupt numbers in the datasheet of the processor 
  * chip you are using. These interrupt numbers are a system unique to the 
- * ìattachInterrupt()î Arduino function.  It is used by both IRrecvPCI and IRfrequency.
+ * ‚ÄúattachInterrupt()‚Äù Arduino function.  It is used by both IRrecvPCI and IRfrequency.
  */
 unsigned char Pin_from_Intr(unsigned char inum);
 // Some useful constants
