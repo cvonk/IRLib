@@ -1,4 +1,4 @@
-/* IRLibMatch.h from IRLib – an Arduino library for infrared encoding and decoding
+/* IRLibMatch.h from IRLib â€“ an Arduino library for infrared encoding and decoding
  * Version 1.5   June 2014
  * Copyright 2014 by Chris Young http://cyborg5.com
  *
@@ -84,6 +84,7 @@ byte IRLIB_DATA_ERROR_MESSAGE(const __FlashStringHelper * s, unsigned char index
 #define DATA_MARK_ERROR(expected) IRLIB_DATA_ERROR_MESSAGE(F("data mark"),offset,rawbuf[offset],expected);
 #define DATA_SPACE_ERROR(expected) IRLIB_DATA_ERROR_MESSAGE(F("data space"),offset,rawbuf[offset],expected);
 #define TRAILER_BIT_ERROR(expected) IRLIB_DATA_ERROR_MESSAGE(F("RC5/RC6 trailer bit length"),offset,rawbuf[offset],expected);
+#define CRC_ERROR IRLIB_REJECTION_MESSAGE(F("crc"));
 #else
 #define IRLIB_ATTEMPT_MESSAGE(s)
 #define IRLIB_TRACE_MESSAGE(s)
@@ -95,6 +96,7 @@ byte IRLIB_DATA_ERROR_MESSAGE(const __FlashStringHelper * s, unsigned char index
 #define DATA_MARK_ERROR(expected) false
 #define DATA_SPACE_ERROR(expected) false
 #define TRAILER_BIT_ERROR(expected) false
+#define CRC_ERROR false
 #endif
 
 #endif //IRLibMatch_h
