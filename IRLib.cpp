@@ -25,6 +25,9 @@
  * Interrupt code based on NECIRrcv by Joe Knapp
  * http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1210243556
  * Also influenced by http://zovirl.com/2008/11/12/building-a-universal-remote-with-an-arduino/
+ *
+ * Added support for SilverLit remote control vehicles.  October 2015.
+ * Coert Vonk.  See http://www.coertvonk.com
  */
 
 #include "IRLib.h"
@@ -351,56 +354,75 @@ void IRdecodeBase::DumpResults(void) {
  * When using variable length Mark, assumes Head_Space==Space_One. If it doesn't, you need a specialized decoder.
  */
 bool IRdecodeBase::decodeGeneric(unsigned char Raw_Count, unsigned int Head_Mark, unsigned int Head_Space, 
-                                 unsigned int Mark_One, unsigned int Mark_Zero, unsigned int Space_One, unsigned int Space_Zero) {
-// If raw samples count or head mark are zero then don't perform these tests.
-// Some protocols need to do custom header work.
-  unsigned long data = 0;  unsigned char Max; offset=1;
-  if (Raw_Count) {if (rawlen != Raw_Count) return RAW_COUNT_ERROR;}
-  if(!IgnoreHeader) {
-    if (Head_Mark) {
-	  if (!MATCH(rawbuf[offset],Head_Mark)) return HEADER_MARK_ERROR(Head_Mark);
-	}
-  }
-  offset++;
-  if (Head_Space) {if (!MATCH(rawbuf[offset],Head_Space)) return HEADER_SPACE_ERROR(Head_Space);}
+                                 unsigned int Mark_One, unsigned int Mark_Zero, unsigned int Space_One, unsigned int Space_Zero, bool space_mark = false ) {
 
-  if (Mark_One) {//Length of a mark indicates data "0" or "1". Space_Zero is ignored.
-    offset=2;//skip initial gap plus header Mark.
-    Max=rawlen;
-    while (offset < Max) {
-      if (!MATCH(rawbuf[offset], Space_One)) return DATA_SPACE_ERROR(Space_One);
-      offset++;
-      if (MATCH(rawbuf[offset], Mark_One)) {
-        data = (data << 1) | 1;
-      } 
-      else if (MATCH(rawbuf[offset], Mark_Zero)) {
-        data <<= 1;
-      } 
-      else return DATA_MARK_ERROR(Mark_Zero);
-      offset++;
+    // If raw samples count or head mark are zero then don't perform these tests.
+    // Some protocols need to do custom header work.
+    unsigned long data = 0;  unsigned char Max; offset = 1;
+    if ( Raw_Count ) {
+        if ( rawlen != Raw_Count ) return RAW_COUNT_ERROR;
     }
-    bits = (offset - 1) / 2;
-  }
-  else {//Mark_One was 0 therefore length of a space indicates data "0" or "1".
-    Max=rawlen-1; //ignore stop bit
-    offset=3;//skip initial gap plus two header items
-    while (offset < Max) {
-      if (!MATCH (rawbuf[offset],Mark_Zero)) return DATA_MARK_ERROR(Mark_Zero);
-      offset++;
-      if (MATCH(rawbuf[offset],Space_One)) {
-        data = (data << 1) | 1;
-      } 
-      else if (MATCH (rawbuf[offset],Space_Zero)) {
-        data <<= 1;
-      } 
-      else return DATA_SPACE_ERROR(Space_Zero);
-      offset++;
+    if ( !IgnoreHeader ) {
+        if ( Head_Mark ) {
+            if ( !MATCH( rawbuf[offset], Head_Mark ) ) return HEADER_MARK_ERROR( Head_Mark );
+        }
     }
-    bits = (offset - 1) / 2 -1;//didn't encode stop bit
-  }
-  // Success
-  value = data;
-  return true;
+
+    offset++;
+    if ( Head_Space ) {
+        if ( !MATCH( rawbuf[offset], Head_Space ) ) return HEADER_SPACE_ERROR( Head_Space );
+    }
+
+    if ( Mark_One ) {//Length of a mark indicates data "0" or "1". Space_Zero is ignored.
+        offset = 2;//skip initial gap plus header Mark.
+        Max = rawlen;
+        while ( offset < Max ) {
+            if ( !MATCH( rawbuf[offset], Space_One ) ) {
+                return DATA_SPACE_ERROR( Space_One );
+            }
+            offset++;
+            if ( MATCH( rawbuf[offset], Mark_One ) ) {
+                data = (data << 1) | 1;
+            }
+            else if ( MATCH( rawbuf[offset], Mark_Zero ) ) {
+                data <<= 1;
+            }
+        else return DATA_MARK_ERROR( Mark_Zero );
+        offset++;
+        }
+        bits = (offset - 1) / 2;
+
+    } else {  // Mark_One was 0 therefore length of a space indicates data "0" or "1".
+
+        Max = rawlen - 1; //ignore stop bit
+        if ( !space_mark ) {
+            offset = 3;  //skip initial gap plus two header items
+        } else {
+            offset = 2;
+        }
+        while ( offset < Max ) {
+
+            if ( !space_mark ) {
+                if ( !MATCH( rawbuf[offset], Mark_Zero ) ) return DATA_MARK_ERROR( Mark_Zero );
+                offset++;
+            }
+            if ( MATCH( rawbuf[offset], Space_One ) ) {
+                data = (data << 1) | 1;
+            } else if ( MATCH( rawbuf[offset], Space_Zero ) ) {
+                data <<= 1;
+            } else return DATA_SPACE_ERROR( Space_Zero );
+            offset++;
+            if ( space_mark ) {
+                if ( !MATCH( rawbuf[offset], Mark_Zero ) ) return DATA_MARK_ERROR( Mark_Zero );
+                offset++;
+            }
+
+        }
+        bits = (offset - 1) / 2 - 1;//didn't encode stop bit
+    }
+    // Success
+    value = data;
+    return true;
 }
 
 /*
@@ -422,12 +444,47 @@ bool IRdecode::decode(void) {
   if (IRdecodePanasonic_Old::decode()) return true;
   if (IRdecodeNECx::decode()) return true;
   if (IRdecodeJVC::decode()) return true;
-//if (IRdecodeADDITIONAL::decode()) return true;//add additional protocols here
+  if (IRdecodeSILVERLIT::decode() ) return true;
+  //if (IRdecodeADDITIONAL::decode()) return true;//add additional protocols here
 //Deliberately did not add hash code decoding. If you get decode_type==UNKNOWN and
 // you want to know a hash code you can call IRhash::decode() yourself.
 // BTW This is another reason we separated IRrecv from IRdecode.
   return false;
 }
+
+bool IRdecodeSILVERLIT::decode( void )
+{
+    IRLIB_ATTEMPT_MESSAGE( F( "SILVERLIT" ) );
+    if ( rawlen != 28 ) return RAW_COUNT_ERROR;
+    if ( !decodeGeneric( 28, 1778, 0, 0, 722, 1037, /*367*/ 400, true ) ) {
+        return false;
+    }
+    decode_type = SILVERLIT;
+    unsigned int crc = 
+        ((((value >> 11) & 1) << 1) | ((value >> 12) & 1)) ^ 
+        ((value >> 9) & 3) ^ 
+        ((value >> 7) & 3) ^ 
+        ((value >> 5) & 3) ^ 
+        ((value >> 3) % 3) ^ 
+        ((value >> 2) % 1);
+    if ( value & 3 != crc ) {
+        Serial.print( "> crc err " ); Serial.print( value & 3 ); Serial.print( " != " ); Serial.println( crc );
+        return CRC_ERROR;
+    }
+    return true;
+}
+
+/*  * Again we use a generic routine because most protocols have the same basic structure. However we need to
+ * indicate whether or not the protocol varies the length of the mark or the space to indicate a "0" or "1".
+ * If "Mark_One" is zero. We assume that the length of the space varies. If "Mark_One" is not zero then
+ * we assume that the length of Mark varies and the value passed as "Space_Zero" is ignored.
+ * When using variable length Mark, assumes Head_Space==Space_One. If it doesn't, you need a specialized decoder.
+
+bool IRdecodeBase::decodeGeneric( unsigned char Raw_Count, unsigned int Head_Mark, unsigned int Head_Space,
+    unsigned int Mark_One, unsigned int Mark_Zero, unsigned int Space_One, unsigned int Space_Zero )
+{
+    
+*/
 
 #define NEC_RPT_SPACE	2250
 bool IRdecodeNEC::decode(void) {
@@ -765,7 +822,7 @@ bool IRrecvLoop::GetResults(IRdecodeBase *decoder) {
 }
 #ifdef USE_ATTACH_INTERRUPTS
 /* This receiver uses the pin change hardware interrupt to detect when your input pin
- * changes state. It gives more detailed results than the 50µs interrupts of IRrecv
+ * changes state. It gives more detailed results than the 50Âµs interrupts of IRrecv
  * and theoretically is more accurate than IRrecvLoop. However because it only detects
  * pin changes, it doesn't always know when it's finished. GetResults attempts to detect
  * a long gap of space but sometimes the next signal gets there before GetResults notices.
@@ -1002,7 +1059,7 @@ void do_Blink(void) {
 }
 #ifdef USE_IRRECV
 /*
- * The original IRrecv which uses 50µs timer driven interrupts to sample input pin.
+ * The original IRrecv which uses 50Âµs timer driven interrupts to sample input pin.
  */
 void IRrecv::resume() {
   // initialize state machine variables
