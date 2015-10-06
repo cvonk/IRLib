@@ -460,19 +460,17 @@ bool IRdecodeSILVERLIT::decode( void )
         return false;
     }
     decode_type = SILVERLIT;
-/*    
-    unsigned int crc = 
-        ((((value >> 11) & 1) << 1) | ((value >> 12) & 1)) ^ 
-        ((value >> 9) & 3) ^ 
-        ((value >> 7) & 3) ^ 
-        ((value >> 5) & 3) ^ 
-        ((value >> 3) % 3) ^ 
-        ((value >> 2) % 1);
-    if ( value & 3 != crc ) {
-        Serial.print( "> crc err " ); Serial.print( value & 3 ); Serial.print( " != " ); Serial.println( crc );
+    
+    unsigned int crc =
+        ((bitRead( value, 11 ) << 1) | (bitRead( value, 12 ))) ^
+        ((value >> 10) & 1) ^
+        ((value >> 8) & 3) ^
+        ((value >> 6) & 3) ^
+        ((value >> 4) & 3) ^
+        ((value >> 2) & 3);
+    if ( (value & 3) != crc ) {
         return CRC_ERROR;
     }
-*/
     return true;
 }
 
