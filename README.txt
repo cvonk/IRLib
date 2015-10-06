@@ -1,4 +1,15 @@
-IRLib � an Arduino library for infrared encoding and decoding
+IRLib – an Arduino library for infrared encoding and decoding including SilverLit protocol
+October 2015 
+Copyright 2015 by Coert Vonk
+http://www.coertvonk.com/technology/embedded/arduino-ir-for-silverlit-rc-vehicles-12970
+
+I added a few lines to implement support for SilverLit remote vehicle/car protocol.
+The library was forked from  Chris Young ( http://tech.cyborg5.com/irlib/).  His rewrite
+made it easy to add this new protocol.
+
+-- the original README.txt from Chris Young:
+
+IRLib – an Arduino library for infrared encoding and decoding
 Version 1.51 March 2015 
 Copyright 2013-2015 by Chris Young http://tech.cyborg5.com/irlib/
  
@@ -81,6 +92,6 @@ Online version of this manual is also available at:
 ****************************************************
 The library handles the following protocols:
 NEC, Sony, RC5, RC6, Raw all of which were supported in the KS version.
-Additionally added Panasonic_Old, JVC, NECx.
+Additionally added Panasonic_Old, JVC, NECx, SilverLit.
 Also added KS hash code routines which he released separately.
 Example code included but not in the library: Samsung36, DirecTV, GIcable. rcmm (U-Verse)
