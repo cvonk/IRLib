@@ -1,4 +1,8 @@
-IRLib – an Arduino library for infrared encoding and decoding including SilverLit protocol
+# IRLib – an Arduino library for infrared encoding and decoding including SilverLit protocol
+
+[![GitHub Discussions](https://img.shields.io/github/discussions/cvonk/arduino-infrared_silverlit)](https://github.com/cvonk/arduino-infrared_silverlit/discussions)
+![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/cvonk/arduino-infrared_silverlit)
+![GitHub](https://img.shields.io/github/license/cvonk/arduino-infrared_silverlit)
 
 http://www.coertvonk.com/technology/embedded/arduino-ir-for-silverlit-rc-vehicles-12970
 
