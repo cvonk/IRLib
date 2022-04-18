@@ -1,6 +1,5 @@
 IRLib – an Arduino library for infrared encoding and decoding including SilverLit protocol
-October 2015 
-Copyright 2015 by Coert Vonk
+
 http://www.coertvonk.com/technology/embedded/arduino-ir-for-silverlit-rc-vehicles-12970
 
 I added a few lines to implement support for SilverLit remote vehicle/car protocol.
